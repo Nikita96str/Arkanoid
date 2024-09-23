@@ -15,7 +15,16 @@ PADDLE_X = canvasNode.width / 2
 CENTER_Y = canvasNode.height / 2
 PADDLE_Y = canvasNode.height - PADDLE_HEIGHT*2
 ballX = canvasNode.width / 2
-ballY = BRICK_HEIGHT - 8  //canvasNode.height / 2
+ballY = BRICK_HEIGHT - 8 //canvasNode.height / 2
+ballY_top = ballY - BALL_RADIUS
+ballY_bott = ballY + BALL_RADIUS  
+// ballX_left = ballY - BALL_RADIUS
+function ballX_left() {
+    return ballX - BALL_RADIUS  
+}function ballX_right() {
+    return ballX + BALL_RADIUS  
+}
+
 addX = 0.5
 addY = 0.5 
 
@@ -91,13 +100,21 @@ function drawBricks() {
         if (bricks[`brick_${serNum}`]['status'] === 1) {
             canvasContext.beginPath()    
             canvasContext.fillStyle = bricks[`brick_${serNum}`]['color']
+            const x = bricks[`brick_${serNum}`]['position']['x']
+            const y = bricks[`brick_${serNum}`]['position']['y']
             canvasContext.rect(
-                bricks[`brick_${serNum}`]['position']['x']
-                , bricks[`brick_${serNum}`]['position']['y']
+                x
+                , y
                 , BRICK_WIDTH
                 , BRICK_HEIGHT)
             canvasContext.fill()
             canvasContext.closePath()
+            // draw the y black line
+            canvasContext.beginPath();
+            canvasContext.moveTo(x, y)
+            canvasContext.lineTo(x+BRICK_WIDTH, y)
+            canvasContext.stroke();
+            canvasContext.closePath();
         }
     }
 }
@@ -114,15 +131,23 @@ function drawPaddle(corX, corY) {
     canvasContext.closePath()
 }
 
-function drawBallLine() {
+function drawBall_horizLine(param_BallY) {
     canvasContext.beginPath();
-    canvasContext.fillStyle = "black";
-    canvasContext.moveTo(ballX-20, ballY)
-    canvasContext.lineTo(ballX+20, ballY)
+    // canvasContext.fillStyle = "black";
+    canvasContext.moveTo(ballX-10, param_BallY)
+    canvasContext.lineTo(ballX+10, param_BallY)
     canvasContext.stroke();
     canvasContext.closePath();
-
 }
+function drawBall_vertLine(param_BallX) {
+    canvasContext.beginPath();
+    // canvasContext.fillStyle = "white";
+    canvasContext.moveTo(param_BallX, ballY-10)
+    canvasContext.lineTo(param_BallX, ballY+10)
+    canvasContext.stroke();
+    canvasContext.closePath();
+}
+
 function drawBall(corX, corY) {
     canvasContext.fillStyle = "blue";
     canvasContext.beginPath();
@@ -154,11 +179,16 @@ function collideObjects() {
         if (bricks[`brick_${serNum}`]['status'] === 1) {
             const brick_x = bricks[`brick_${serNum}`]['position']['x']
             const brick_y = bricks[`brick_${serNum}`]['position']['y']
-            const rangeX = brick_x <= ballX && ballX <= brick_x+BRICK_WIDTH
-            const lowBorderY = ballY-BALL_RADIUS === brick_y+BRICK_HEIGHT
-            const topBorderY = ballY-BALL_RADIUS === brick_y-BRICK_HEIGHT
+            const rangeX = brick_x < ballX_left() && ballX_right() < brick_x+BRICK_WIDTH
+            const lowBorderBrickY = ballY_top === brick_y+BRICK_HEIGHT
+            const topBorderBrickY = ballY_bott === brick_y
             if (rangeX) {
-                if (lowBorderY || topBorderY) {
+                if (lowBorderBrickY || topBorderBrickY) {
+                    console.log('ballY_bott', ballY_bott);
+                    console.log('brick_y+BRICK_HEIGHT', brick_y+BRICK_HEIGHT);
+                    console.log('ballY_top', ballY_top);
+                    console.log('brick_y', brick_y);
+                    play = false
                     addY = -addY
                     bricks[`brick_${serNum}`]['status'] = 0
                     score += 1
@@ -187,13 +217,18 @@ function game() {
     drawBricks()
     drawPaddle(PADDLE_X, PADDLE_Y)
     drawBall(ballX, ballY)
-    drawBallLine()
-    textOnScreen('Счёт: ' + score, posX = 10, posY = 15, size = 10, align = 'start')
-    textOnScreen('Жизни: ' + lives, posX = canvasNode.width - 10, posY = 15, size = 10, align = 'end')
+    drawBall_horizLine(ballY_top)
+    drawBall_horizLine(ballY_bott)
+    drawBall_vertLine(ballX_left()) 
+    drawBall_vertLine(ballX_right()) 
+    textOnScreen('Scores: ' + score, posX = 10, posY = 15, size = 10, align = 'start')
+    textOnScreen('Lives: ' + lives, posX = canvasNode.width - 10, posY = 15, size = 10, align = 'end')
     if (play) { 
         collideObjects()
         ballX += addX
         ballY += addY
+        ballY_top = ballY - BALL_RADIUS
+        ballY_bott = ballY + BALL_RADIUS  
     } else {
         textOnScreen("Press 'Space' for start/pause game", posX = CENTER_X, posY = CENTER_Y, size = 20, align = 'center')
     }
