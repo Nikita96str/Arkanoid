@@ -113,6 +113,14 @@ function drawBricks() {
             canvasContext.beginPath();
             canvasContext.moveTo(x, y)
             canvasContext.lineTo(x+BRICK_WIDTH, y)
+            canvasContext.strokeStyle = 'black';
+            canvasContext.stroke();
+            canvasContext.closePath();
+            // draw the y HotPink line
+            canvasContext.beginPath();
+            canvasContext.moveTo(x, y+BRICK_HEIGHT)
+            canvasContext.lineTo(x+BRICK_WIDTH, y+BRICK_HEIGHT)
+            canvasContext.strokeStyle = 'HotPink';
             canvasContext.stroke();
             canvasContext.closePath();
         }
@@ -136,6 +144,7 @@ function drawBall_horizLine(param_BallY) {
     // canvasContext.fillStyle = "black";
     canvasContext.moveTo(ballX-10, param_BallY)
     canvasContext.lineTo(ballX+10, param_BallY)
+    canvasContext.strokeStyle = 'black';
     canvasContext.stroke();
     canvasContext.closePath();
 }
@@ -144,6 +153,7 @@ function drawBall_vertLine(param_BallX) {
     // canvasContext.fillStyle = "white";
     canvasContext.moveTo(param_BallX, ballY-10)
     canvasContext.lineTo(param_BallX, ballY+10)
+    canvasContext.strokeStyle = 'black';
     canvasContext.stroke();
     canvasContext.closePath();
 }
@@ -178,18 +188,35 @@ function collideObjects() {
     for (let serNum = 1; serNum <= bricksAmount; serNum++) {
         if (bricks[`brick_${serNum}`]['status'] === 1) {
             const brick_x = bricks[`brick_${serNum}`]['position']['x']
-            const brick_y = bricks[`brick_${serNum}`]['position']['y']
-            const rangeX = brick_x < ballX_left() && ballX_right() < brick_x+BRICK_WIDTH
-            const lowBorderBrickY = ballY_top === brick_y+BRICK_HEIGHT
-            const topBorderBrickY = ballY_bott === brick_y
-            if (rangeX) {
-                if (lowBorderBrickY || topBorderBrickY) {
+            const brick_y_top = bricks[`brick_${serNum}`]['position']['y']
+            const brick_y_bot = brick_y_top + BRICK_HEIGHT
+            const rangeLeft = brick_x < ballX_left() && ballX_left() < brick_x+BRICK_WIDTH
+            const rangeRight = brick_x < ballX_right() && ballX_right() < brick_x+BRICK_WIDTH
+            const lowBorderBrick = ballY_top <= brick_y_bot
+            const topBorderBrick = ballY_bott >= brick_y_top
+            const rangeTop = brick_y_top <= ballY_top && ballY_top <= brick_y_bot
+            const rangeBot = brick_y_bot >= ballY_bott && ballY_bott >= brick_y_top
+            const leftBorderBrick = ballX_left() <= brick_x+BRICK_WIDTH
+            const rightBorderBrick = ballX_right() >= brick_x
+            if (rangeLeft || rangeRight) {
+                if (lowBorderBrick && topBorderBrick) {
                     console.log('ballY_bott', ballY_bott);
-                    console.log('brick_y+BRICK_HEIGHT', brick_y+BRICK_HEIGHT);
+                    console.log('brick_y_bot', brick_y_bot);
                     console.log('ballY_top', ballY_top);
-                    console.log('brick_y', brick_y);
-                    play = false
+                    console.log('brick_y_top', brick_y_top);
+                    // play = false
                     addY = -addY
+                    bricks[`brick_${serNum}`]['status'] = 0
+                    score += 1
+                } 
+            } else if (rangeTop || rangeBot) {    
+                if (leftBorderBrick && rightBorderBrick) {
+                    console.log('ballY_bott', ballY_bott);
+                    console.log('brick_y_bot', brick_y_bot);
+                    console.log('ballY_top', ballY_top);
+                    console.log('brick_y_top', brick_y_top);
+                    // play = false
+                    addX = -addX
                     bricks[`brick_${serNum}`]['status'] = 0
                     score += 1
                 } 
